@@ -15,19 +15,15 @@ controls.rotateSpeed = 1.2;
 controls.autoRotate = true; 
 controls.autoRotateSpeed = 2.0;
 
-// Bloquear completamente el zoom y el paneo por defecto
 controls.enableZoom = false;
 controls.enablePan = false;
 
-// --- SOLUCIÓN TRACKPAD: Control total de giro y prevención de zoom de la página ---
+// Control de trackpad con passive: false para evitar zoom/scroll de la página
 renderer.domElement.addEventListener('wheel', (e) => {
-    e.preventDefault(); // Evita que la página entera se agrande/achique o haga scroll
-    
-    // Sensibilidad del trackpad para rotar la escena con los dedos
+    e.preventDefault();
     scene.rotation.y -= e.deltaX * 0.005;
     scene.rotation.x -= e.deltaY * 0.005;
 }, { passive: false });
-// ---------------------------------------------------------------------------------
 
 // 2. GEOMETRÍA (Resolución optimizada para nitidez)
 const scanWidth = 160;
@@ -241,7 +237,7 @@ function animate() {
 
 animate();
 
-// 6. FORMATOS Y DESCARGA
+// 6. FORMATOS Y DESCARGA (Con alta calidad de video y bitrate forzado)
 function resizeCanvas() {
     const format = formatSelect.value;
     let aspect = 16 / 9;
@@ -270,8 +266,12 @@ let recordedChunks = [];
 downloadBtn.addEventListener('click', () => {
     if (downloadBtn.innerText.includes("RECORDING")) return;
     
-    const stream = renderer.domElement.captureStream(30); 
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    // Capturar a 60 fps con alta tasa de bits para evitar pixelación
+    const stream = renderer.domElement.captureStream(60); 
+    mediaRecorder = new MediaRecorder(stream, { 
+        mimeType: 'video/webm; codecs=vp9',
+        bitsPerSecond: 8000000 
+    });
     
     mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) recordedChunks.push(e.data);
